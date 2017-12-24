@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang='en'>
+  <head>
+    <meta charset="UTF-8">
+    <title>Firebase Chat</title>
+    <link rel="icon" href="data:;base64, IVBORw0KGgo=">
+    <script src="https://cdn.firebase.com/js/client/2.4.0/firebase.js"></script>
+    <style>
+      body {
+        font-family: 'HelveticaNeue-Light';
+      }
+      .msg {
+        margin: 10px 0;
+        padding: 10px;
+        width: 400px;
+        background-color: #efefef;
+      }
+      #username, #text {
+        margin: 5px 0px;
+      }
+      #post {
+        padding: 0.5em 1em;
+        background-color: #50b1ff;
+        border: none;
+        color: #FFF;
+      }
+      #login {
+        padding: 0.5em 1em;
+        background-color: #DD4B39;
+        color: #FFF;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+
+  <body>
+    <button id="login">Login with Google</button>
+    <input id="text" type="text" placeholder="Message"><br/>
+    <button id="post">Post</button><br/>
+    <div id="results"></div>
+
+    <!-- Firebase Webapp snippet -->
+    <script src="https://www.gstatic.com/firebasejs/4.8.1/firebase.js"></script>
+    <script>
+      // Initialize Firebase
+var config = {
+  apiKey: "AIzaSyBV4Lw2s9UiEdHfgV_5cIo_yC7VZgUhpf4",
+  authDomain: "sunny-aleph-173302.firebaseapp.com",
+  databaseURL: "https://sunny-aleph-173302.firebaseio.com",
+  projectId: "sunny-aleph-173302",
+  storageBucket: "sunny-aleph-173302.appspot.com",
+  messagingSenderId: "948547001899"
+};
+firebase.initializeApp(config);
+</script>
+<!-- END Firebase Webapp snippet -->
+
+<script>
+  <!-- this place will be filled with user -->
+var myFirebase = new Firebase('https://sunny-aleph-173302.firebaseio.com/');
+var usernameInput = document.querySelector('#username');
+var textInput = document.querySelector('#text');
+var postButton = document.querySelector('#post');
+
+var username = null;
+var loginButton = document.querySelector('#login');
+postButton.style.display = 'none';
+textInput.style.display = 'none';
+
+
+postButton.addEventListener("click", function() {
+  var msgUser = username;
+  var msgText = textInput.value;
+  // myFirebase.set(msgUser + " says: " + msgText);
+  myFirebase.push({ username: msgUser, text: msgText });
+  textInput.value = "";
+});
+
+loginButton.addEventListener('click', function() {
+  var provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider)
+    .then(result => {
+      // This gives you a Google Access Token, for using Google API.
+      var token = result.credential.accessToken;
+      // The signed user info.
+      var user = result.user;
+      username = user.displayName;
+      loginButton.textContent = "logged in as " + username;
+      loginButton.disabled = true;
+      postButton.style.display = "block";
+      textInput.style.display = "block";
+
+      startListening();
+    })
+    .catch(error => {
+      let errorCode = error.code;
+      let errorMsg = error.message;
+      let email = error.email;
+      let credential = error.credential;
+      console.log(errorCode, errorMsg, email, credential)
+    })
+});
+
+var startListening = function() {
+  myFirebase.on('child_added', function(snapshot) {
+
+    var msg = snapshot.val();
+
+    var msgUsernameElement = document.createElement("b");
+    msgUsernameElement.textContent = msg.username;
+
+    var msgTextElement = document.createElement("p");
+    msgTextElement.textContent = msg.text;
+
+    var msgElement = document.createElement("div");
+    msgElement.appendChild(msgUsernameElement);
+    msgElement.appendChild(msgTextElement);
+
+    msgElement.className = "msg";
+    document.getElementById("results").appendChild(msgElement);
+  });
+}
+
+
+</script>
+
+  </body>
+
+</html>
